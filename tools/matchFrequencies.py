@@ -1,5 +1,4 @@
-# This file will hold several functions whose purpose is to match frequencies to english
-# letter frequency.
+""" This module holds several functions whose purpose is to identify ciphers from cipherText."""
 import sys
 import collections
 import operator
@@ -15,7 +14,7 @@ def getFreq(fileName):
     """Gets some frequencies from a file. Not really necessary."""
     return getStrFreq(getString(filename))
 
-def getString(filename):
+def getString(fileName):
     """Gets a string from a file"""
     print("getting string from file " + fileName)
     readFile = open(fileName, 'r')
@@ -41,28 +40,31 @@ def matchFreq(fileName):
     """Don't mind this, just for me -Ken"""
     string = getString(fileName)
     freqs = getStrFreq(string)
-    englishDist = getEnglishDist(string)
-    print("English distance is %.5f" % englishDist)
+    englDist = englishDist(string)
+    print("English distance is %.5f" % englDist)
     sortedAlphFreqs = sorted(alphFreqDict.items(), key=operator.itemgetter(1), reverse = True)
     sortedFreqs = sorted(freqs.items(), key=operator.itemgetter(1), reverse = True)
     sortedDist = 0.0
     for i in range(0,26):
         sortedDist += (sortedFreqs[i][1] - sortedAlphFreqs[i][1]) ** 2
     print("Sorted distance is %.5f" % sortedDist)
+    vigDist = vigenereDist(string)
+    print("Vigenere distance is %.5f" % vigDist)
     return
 
-def getVigenereDist(string):
+def vigenereDist(string):
     """Calculates and returns the vigenere distance for a given string"""
     ans = 9999.99
     for nth in range(6, 10):
         tempAns = 0.0
         strings = []
         for start in range (0, i):
-            nthString = everyNth(string, start, nth)
+            nthString = stringOps.everyNth(string, start, nth)
             strings.append(nthString)
-            tempAns += shiftedDist(string)
+            tempAns += shiftedDist(nthString)
         if tempAns < ans:
             ans = tempAns
+            print("nth was %.0f" % nth)
     return ans
 
 def shiftedDist(string):
@@ -82,3 +84,11 @@ def englishDist(string):
     for c in alph:
         englishDist += (freqs[c] - alphFreqDict[c]) ** 2
     return englishDist
+
+def fromFile(function, fileName):
+    """Performs string function on file"""
+    print('fileName is ' + fileName)
+    string = getString(fileName)
+    return function(fileName)
+
+matchFreq(sys.argv[1])
