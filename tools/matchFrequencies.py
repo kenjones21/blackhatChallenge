@@ -12,7 +12,12 @@ for i in range(0, len(alphFreq)):
     alphFreqDict[alph[i]] = alphFreq[i]
 
 def getFreq(fileName):
-    print("getting frequencies for ciphertext in " + fileName)
+    """Gets some frequencies from a file. Not really necessary."""
+    return getStrFreq(getString(filename))
+
+def getString(filename):
+    """Gets a string from a file"""
+    print("getting string from file " + fileName)
     readFile = open(fileName, 'r')
     lines = []
     for line in readFile:
@@ -21,9 +26,10 @@ def getFreq(fileName):
         print("Your file had newlines in it, I'm not dealing with those, " \
               "do it yourself (or remove the newlines)")
         sys.exit()
-    return getStrFreq(lines[0])
+    return lines[0]
 
 def getStrFreq(string):
+    """Gets the string frequencies for a given string"""
     freqs = collections.defaultdict(float)
     for c in string:
         freqs[c] += 1 # Count the characters
@@ -32,10 +38,10 @@ def getStrFreq(string):
     return freqs
 
 def matchFreq(fileName):
-    freqs = getFreq(fileName)
-    englishDist = 0.0
-    for c in alph:
-        englishDist += (freqs[c] - alphFreqDict[c]) ** 2
+    """Don't mind this, just for me -Ken"""
+    string = getString(fileName)
+    freqs = getStrFreq(string)
+    englishDist = getEnglishDist(string)
     print("English distance is %.5f" % englishDist)
     sortedAlphFreqs = sorted(alphFreqDict.items(), key=operator.itemgetter(1), reverse = True)
     sortedFreqs = sorted(freqs.items(), key=operator.itemgetter(1), reverse = True)
@@ -52,14 +58,16 @@ def getVigenereDist(string):
         tempAns = 0.0
         strings = []
         for start in range (0, i):
-            strings.append(everyNth(string, start, nth))
+            nthString = everyNth(string, start, nth)
+            strings.append(nthString)
             tempAns += shiftedDist(string)
         if tempAns < ans:
             ans = tempAns
     return ans
 
 def shiftedDist(string):
-    ans = 9999.99
+    """Calculates the minimum distance for a string with any caesar shift"""
+    ans = 9999.99 # Will get replaced, just needed a big number
     for shift in range(0, 26):
         shiftedStr = stringOps.shiftString(string, shift)
         dist = englishDist(shiftedStr)
@@ -68,6 +76,7 @@ def shiftedDist(string):
     return ans
 
 def englishDist(string):
+    """Calculates the distance of a string from english letter frequencies"""
     englishDist = 0.0
     freqs = getStrFreq(string)
     for c in alph:
