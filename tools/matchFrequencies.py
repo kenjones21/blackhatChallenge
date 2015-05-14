@@ -90,5 +90,3 @@ def fromFile(function, fileName):
     print('fileName is ' + fileName)
     string = getString(fileName)
     return function(fileName)
-
-matchFreq(sys.argv[1])
