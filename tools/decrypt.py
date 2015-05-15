@@ -7,6 +7,7 @@ import sys
 import collections
 import stringOps
 import matchFrequencies
+import numpy
 
 alph = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
@@ -32,18 +33,28 @@ def decVigenere(cText, key):
 
 def decHill(cText, key):
     ans = ""
-    decKey = matInverse(key);
+    decKey = numpy.matrix(matInverse(key));
+    print(decKey)
     numText = map(ord, cText)
-    # Do matrix multiplication here
-    return 0
+    numText = map(lambda x: x - ord('A'), numText)
+    for i in range(0,len(cText)/2):
+        a = i*2
+        b = a + 1
+        temp = numpy.matrix([[numText[a]],[numText[b]]])
+        vec = numpy.mod(decKey * temp, 26)
+        vec = numpy.asarray(vec).reshape(-1)
+        vec = map(lambda x: chr(x + ord('A')), vec)
+        ans += vec[0]
+        ans += vec[1] # This was way too long a for loop
+    return ans
 
 def matInverse(matrix):
     det = inverse((matrix[0][0]*matrix[1][1] - matrix[0][1]*matrix[1][0]))
     ans = [[0,0],[0,0]]
     ans[0][0] = (det * matrix[1][1]) % 26
     ans[1][1] = (det * matrix[0][0]) % 26
-    ans[1][0] = (det * -matrix[0][1]) % 26
-    ans[0][1] = (det * -matrix[1][0]) % 26
+    ans[1][0] = (det * -matrix[1][0]) % 26
+    ans[0][1] = (det * -matrix[0][1]) % 26
     return ans
 
 def inverse(num):
@@ -53,5 +64,3 @@ def inverse(num):
             return i
     print("No inverse for this number!")
     return 0 # Should make things obvious for our purposes. 
-
-print(matInverse([[3,2],[3,5]]))
