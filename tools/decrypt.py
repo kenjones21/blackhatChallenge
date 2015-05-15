@@ -8,6 +8,7 @@ import collections
 import stringOps
 import matchFrequencies
 import numpy
+from colorama import Fore
 
 alph = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
@@ -41,10 +42,10 @@ def decHill(cText, key):
         a = i*2
         b = a + 1
         temp = numpy.matrix([[numText[a]],[numText[b]]])
-        vec = numpy.mod(decKey * temp, 26)
-        vec = numpy.asarray(vec).reshape(-1)
-        vec = map(lambda x: chr(x + ord('A')), vec)
-        ans += vec[0]
+        vec = numpy.mod(decKey * temp, 26) # Mod that shit 26
+        vec = numpy.asarray(vec).reshape(-1) # Reshape array
+        vec = map(lambda x: chr(x + ord('A')), vec) # To characters!
+        ans += vec[0] # Have to do it elementwise for reasons
         ans += vec[1] # This was way too long a for loop
     return ans
 
@@ -62,5 +63,5 @@ def inverse(num):
     for i in range(0,26): # I know, I know, could use EA or something, lazy. 
         if (i * num) % 26 == 1:
             return i
-    print("No inverse for this number!")
+    print(Fore.RED + "No inverse for this number!" + Fore.RESET)
     return 0 # Should make things obvious for our purposes. 
