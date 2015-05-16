@@ -74,8 +74,22 @@ def shiftedDist(string):
         shiftedStr = stringOps.shiftString(string, shift)
         dist = englishDist(shiftedStr)
         if dist < ans:
+            print("Next best shift is %.0f" % shift)
             ans = dist
     return ans
+
+def minShift(string):
+    """Calculates the minimum distance for a string with any caesar shift"""
+    ans = 9999.99 # Will get replaced, just needed a big number
+    minShift = 27
+    for shift in range(0, 26):
+        shiftedStr = stringOps.shiftString(string, shift)
+        dist = englishDist(shiftedStr)
+        if dist < ans:
+            print("Next best shift is %.0f" % shift)
+            ans = dist
+            minShift = shift
+    return minShift
 
 def englishDist(string):
     """Calculates the distance of a string from english letter frequencies"""

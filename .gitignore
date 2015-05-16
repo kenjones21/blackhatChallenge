@@ -1,5 +1,5 @@
 cipherTexts/
 tools/__pycache__
 notes/
-tools/solve*
+tools/solveVigenere.py
 *.pyc
