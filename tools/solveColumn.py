@@ -11,6 +11,9 @@ import stringOps
 import matchFrequencies
 import math #lol
 
+common = ['the', 'be', 'to', 'of', 'and', 'in', 'that', 'have', 'it',
+          'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at']
+
 def findLetter(string, letter):
     ans = []
     for i in range(0,len(string)):

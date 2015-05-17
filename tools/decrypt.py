@@ -9,6 +9,7 @@ import stringOps
 import matchFrequencies
 import numpy
 from colorama import Fore
+import operator
 
 alph = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
@@ -49,6 +50,46 @@ def decHill(cText, key):
         ans += vec[1] # This was way too long a for loop
     return ans
 
+def decColumn(cText, key):
+    ans = ""
+    for i in range(0, len(cText)):
+        ans += 'Z'
+    ans = bytearray(ans)
+    decKey = []
+    for i in range(0, len(key)):
+        decKey.append(-1)
+    for i in range(0, len(key)):
+        decKey[key[i]] = i
+    numCol = len(key)
+    longCol = len(cText) % numCol
+    shortCol = numCol - longCol
+    shortLength = len(cText) / numCol
+    longLength = shortLength + 1
+    shortCols = []
+    longCols = []
+    char = 0
+    for i in range(0, longCol):
+        longCols.append(key[i])
+    for i in range(longCol, numCol):
+        shortCols.append(key[i])
+    cols = collections.defaultdict(str)
+    for k in range(0, len(key)):
+        if k in shortCols:
+            cols[k] = cText[char:shortLength+char]
+            char += shortLength
+        elif k in longCols:
+            cols[k] = cText[char:longLength+char]
+            char += longLength
+    sorted_cols = sorted(cols.items(), key=operator.itemgetter(0))
+    sorted_cols = map(list, sorted_cols)
+    for i in range(0, len(sorted_cols)):
+        sorted_cols[i][0] = decKey[i]
+    sorted_cols = sorted(sorted_cols, key=operator.itemgetter(0))
+    for c in sorted_cols:
+        for i in range(0, len(c[1])):
+            ans[numCol*i + c[0]] = c[1][i]
+    print(ans)
+
 def matInverse(matrix):
     det = inverse((matrix[0][0]*matrix[1][1] - matrix[0][1]*matrix[1][0]))
     ans = [[0,0],[0,0]]
@@ -65,3 +106,6 @@ def inverse(num):
             return i
     print(Fore.RED + "No inverse for this number!" + Fore.RESET)
     return 0 # Should make things obvious for our purposes. 
+
+cText = 'EVLNACDTESEAROFODEECWIREE'
+decColumn(cText, [5,2,1,3,0,4])
