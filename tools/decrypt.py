@@ -13,6 +13,26 @@ import operator
 
 alph = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
+def sortThings(masterList, slaveList, a, b):
+    wasString = False
+    if type(masterList) == str:
+        wasString = True
+        masterList = bytearray(masterList)
+    if b < a:
+        pivot = a
+        pivVal = masterList[a]
+        swap([masterList, slaveList], a, b)
+        index = a
+        for i in range(a, b):
+            if masterList[i] >= pivVal:
+                swap([masterList, slaveList], i, index)
+                index += 1
+        swap([masterList, slaveList], index, b)
+        sortThings(masterList, slaveList, a, index - 1)
+        sortThings(masterList, slaveList, index + 1, b)
+    if wasString:
+        masterList = str(masterList)
+
 def decSubs(cText, key):
     ans = ""
     subsDict = collections.defaultdict(str)
@@ -52,9 +72,6 @@ def decHill(cText, key):
 
 def decColumn(cText, key):
     ans = ""
-    for i in range(0, len(cText)):
-        ans += 'Z'
-    ans = bytearray(ans)
     decKey = []
     for i in range(0, len(key)):
         decKey.append(-1)
@@ -65,30 +82,23 @@ def decColumn(cText, key):
     shortCol = numCol - longCol
     shortLength = len(cText) / numCol
     longLength = shortLength + 1
-    shortCols = []
-    longCols = []
+    cols = []
     char = 0
-    for i in range(0, longCol):
-        longCols.append(key[i])
-    for i in range(longCol, numCol):
-        shortCols.append(key[i])
-    cols = collections.defaultdict(str)
-    for k in range(0, len(key)):
-        if k in shortCols:
-            cols[k] = cText[char:shortLength+char]
-            char += shortLength
-        elif k in longCols:
-            cols[k] = cText[char:longLength+char]
-            char += longLength
-    sorted_cols = sorted(cols.items(), key=operator.itemgetter(0))
-    sorted_cols = map(list, sorted_cols)
-    for i in range(0, len(sorted_cols)):
-        sorted_cols[i][0] = decKey[i]
-    sorted_cols = sorted(sorted_cols, key=operator.itemgetter(0))
-    for c in sorted_cols:
-        for i in range(0, len(c[1])):
-            ans[numCol*i + c[0]] = c[1][i]
-    print(ans)
+    for i in range(0, len(key)):
+        cols.append("")
+    for i in range(0, len(key)):
+        if key[i] < longCol:
+            for j in range(char,char+longLength):
+                cols[key[i]] += cText[char]
+                char += 1
+        else:
+            for j in range(char,char+shortLength):
+                cols[key[i]] += cText[char]
+                char += 1
+    sortThings(key, cols, 0, len(key))
+    for i in range(0, len(cText)):
+        ans += cols[i % len(key)][i / len(key)]
+    return ans
 
 def matInverse(matrix):
     det = inverse((matrix[0][0]*matrix[1][1] - matrix[0][1]*matrix[1][0]))
@@ -107,5 +117,4 @@ def inverse(num):
     print(Fore.RED + "No inverse for this number!" + Fore.RESET)
     return 0 # Should make things obvious for our purposes. 
 
-cText = 'EVLNACDTESEAROFODEECWIREE'
-decColumn(cText, [5,2,1,3,0,4])
+

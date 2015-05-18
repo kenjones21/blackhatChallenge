@@ -3,6 +3,7 @@ My file for solving column transposition cipher.
 The lack of padding at the end really fucks you over
 Seriously fuck this
 Can you even decrypt this given a key?
+Yeah you can nevermind
 """
 
 import sys
@@ -10,9 +11,58 @@ import collections
 import stringOps
 import matchFrequencies
 import math #lol
+from decrypt import decColumn
+import bisect
+import random
+from copy import copy
+from pycipher import ColTrans
+from scrapeFreq import get_freqs
+from encode import encColumn
 
-common = ['the', 'be', 'to', 'of', 'and', 'in', 'that', 'have', 'it',
-          'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at']
+words = ['THE', 'BE', 'TO', 'OF', 'AND', 'IN', 'THAT', 'HAVE', 'IT',
+          'FOR', 'NOT', 'ON', 'WITH', 'HE', 'AS', 'YOU', 'DO', 'AT']
+
+diFreq = collections.defaultdict(float)
+diFile = open('bigrams.txt', 'r')
+mySum = 0.0
+for line in diFile:
+    count = int(line[3:len(line) - 2])
+    mySum += float(count)
+
+diFile = open('bigrams.txt', 'r')
+    
+for line in diFile:
+    digram = line[0] + line[1]
+    count = int(line[3:len(line) - 2])
+    diFreq[digram] = float(count)/mySum
+
+def getFirstLetters(words):
+    ans = ""
+    for word in words:
+        ans += word[0]
+    return set(ans)
+
+firstLetters = getFirstLetters(words)
+l2w = filter(lambda x: len(x) == 2, words)
+l3w = filter(lambda x: len(x) == 3, words)
+l4w = filter(lambda x: len(x) == 4, words)
+
+def checkWords(string, words, pos, wordLen):
+    if string[pos:pos+wordLen] in words:
+        return True
+    else: return False
+
+def findWords(string, firstLetters, len2words, len3words, len4words):
+    ans = 0
+    for i in range(0, len(string)):
+        if chr(string[i]) in firstLetters:
+            if checkWords(string, len2words, i, 2):
+                ans += 1
+            elif checkWords(string, len3words, i, 3):
+                ans += 2
+            elif checkWords(string, len4words, i, 4):
+                ans += 3
+    return ans
 
 def findLetter(string, letter):
     ans = []
@@ -129,5 +179,161 @@ def allLettersInFound(letters, found):
             return False
     return True
 
-cText = matchFrequencies.getString(sys.argv[1])
-guessColumns(cText)
+def genRandKey(numCol):
+    ans = []
+    for i in range(0, numCol):
+        ans.append(i)
+    random.shuffle(ans)
+    return ans
+
+def breed(key1, key2, mutFact):
+    ans = []
+    for i in range(0, len(key1)):
+        randbit = random.randrange(0,2)
+        if randbit:
+            ans.append(key1[i])
+        else:
+            ans.append(key2[i])
+        if random.randrange(0, 100) < mutFact:
+            swap(ans, random.randrange(0, i), i)
+    return ans
+
+def sortThings(masterList, slaveList, a, b):
+    wasString = False
+    if type(masterList) == str:
+        wasString = True
+        masterList = bytearray(masterList)
+    if b < a:
+        pivot = a
+        pivVal = masterList[a]
+        swap([masterList, slaveList], a, b)
+        index = a
+        for i in range(a, b):
+            if masterList[i] >= pivVal:
+                swap([masterList, slaveList], i, index)
+                index += 1
+        swap([masterList, slaveList], index, b)
+        sortThings(masterList, slaveList, a, index - 1)
+        sortThings(masterList, slaveList, index + 1, b)
+    if wasString:
+        masterList = str(masterList)
+
+def genSolve(cText, words, numCol):
+    random.seed()
+    firstLetters = getFirstLetters(words)
+    l2w = filter(lambda x: len(x) == 2, words)
+    l3w = filter(lambda x: len(x) == 3, words)
+    l4w = filter(lambda x: len(x) == 4, words)
+    generation = 0
+    keys = []
+    for i in range(0, 10):
+        key = genRandKey(numCol)
+        print(key)
+        keys.append(key)
+    wordsFound = [0]*len(keys)
+    print(wordsFound[0])
+    while generation < 2000:
+        if (generation % 1000) == 0:
+            print("Generation: {0}, words: {1}".format(generation,
+                                                    wordsFound[0]))
+        wordsFound = [0]*len(keys)
+        for i in range(0, len(keys)):
+            key = keys[i]
+            pText = decColumn(cText, key)
+            numWords = findWords(pText, firstLetters, l2w, l3w, l4w)
+            if numWords > 2:
+                print(pText)
+                print(keys[i])
+                print(numWords)
+            wordsFound[i] = numWords
+        sortThings(wordsFound, keys, 0, len(wordsFound) - 1)
+        newKeys = []
+        for i in range(0, 10):
+            par1 = random.randrange(0, 5) * 2
+            par2 = random.randrange(0, 5) * 2 + 1
+            newKeys.append(breed(keys[par1], keys[par2], 0))
+        keys = newKeys
+        print(keys)
+        generation += 1
+
+def countDigrams(string):
+    digrams = collections.defaultdict(float)
+    for i in range(0, len(string) - 1):
+        c1 = string[i]
+        c2 = string[i+1]
+        digrams[c1+c2] += 1.0/len(string)
+    return digrams
+
+def score(digrams):
+    ans = 0.0
+    for digram in digrams.keys():
+        ans += (digrams[digram] - diFreq[digram])**2
+    return ans
+
+def newKey(cText, key, temp, oldScore):
+    randint1 = random.randrange(0, len(key))
+    randint2 = random.randrange(0, len(key))
+    newKey = copy(key)
+    swap([newKey], randint1, randint2)
+    newPText = decColumn(cText, newKey)
+    newScore = score(countDigrams(newPText))
+    dif = newScore - oldScore
+    if dif < 0:
+        return newKey
+    else:
+        if shouldJump(dif, temp):
+            return newKey
+        else:
+            return key
+
+def shouldJump(dif, temp):
+    fact = math.exp(-1000 * float(dif) / temp)
+    if random.random() < fact:
+        return True
+    else:
+        return False
+    
+def swap(arrs, ind1, ind2):
+    for arr in arrs:
+        temp = arr[ind1]
+        arr[ind1] = arr[ind2]
+        arr[ind2] = temp
+
+def saSolve(cText, numCol):
+    random.seed()
+    key = genRandKey(numCol)
+    pText = decColumn(cText, key)
+    newScore = score(countDigrams(pText))
+    bestScore = score
+    temp = 100.0
+    while temp > 0:
+        key = newKey(cText, key, temp, newScore)
+        pText = decColumn(cText, key)
+        newScore = score(countDigrams(pText))
+        if newScore < bestScore:
+            print(pText)
+            print(key)
+            print(newScore)
+            bestScore = newScore
+        temp -= 0.01
+    return pText
+
+
+pText = 'If plaintext is stored in a computer file (and the situation of automatically made backup files generated during program execution must be included here, even if invisible to the user), the storage media along with the entire computer and its components must be secure. Sensitive data is sometimes processed on computers whose mass storage is removable, in which case physical security of the removed disk is separately vital. In the case of securing a computer, useful (as opposed to handwaving) security must be physical (e.g., against burglary, brazen removal under cover of supposed repair, installation of covert monitoring devices, etc.), as well as virtual (e.g., operating system modification, illicit network access, Trojan programs, ...). The wide availability of keydrives, which can plug into most modern computers and store large quantities of data, poses another severe security headache. A spy (perhaps posing as a cleaning person) could easily conceal one and even swallow it, if necessary.'.upper()
+
+myKey = "ABCDEFGHIJKLMNOP"
+myKey2 = [0,1,2,3]
+cText = encColumn(pText,myKey2)
+cText2 = ColTrans(myKey).encipher(pText)
+
+pText2 = decColumn(cText,myKey2)
+
+print(cText)
+print(cText2)
+print("===========")
+print(pText)
+print(pText2)
+print("===========")
+
+sortThings(myKey, myKey2, 0, len(myKey)-1)
+print(score(countDigrams(saSolve(cText2, 16))))
