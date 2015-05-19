@@ -18,6 +18,9 @@ from copy import copy
 from pycipher import ColTrans
 from scrapeFreq import get_freqs
 from encode import encColumn
+import string
+from charEng import countDigrams, score
+from arrTools import sortThings, numMatches, modArray
 
 words = ['THE', 'BE', 'TO', 'OF', 'AND', 'IN', 'THAT', 'HAVE', 'IT',
           'FOR', 'NOT', 'ON', 'WITH', 'HE', 'AS', 'YOU', 'DO', 'AT']
@@ -71,20 +74,6 @@ def findLetter(string, letter):
             ans.append(i)
     return ans
 
-def modArray(arr, mod):
-    newArr = []
-    for i in range(0, len(arr)):
-        newArr.append(arr[i] % mod)
-    return newArr
-
-def numMatches(arr1, arr2):
-    ans = 0
-    for el1 in arr1:
-        for el2 in arr2:
-            if el1 == el2:
-                ans += 1
-    return ans
-
 def guessColumns(cText, word):
     letterpos = []
     for c in word:
@@ -102,9 +91,7 @@ def guessColumns(cText):
     for cols in range(5,21):
         thes = 0 # number of the's
         collen = int(math.ceil(len(cText)/float(cols)))
-        shortcols = cols - (len(cText) % cols)
-        if shortcols > 4: shortcols = 4 # blehhhh
-        if len(cText) % cols == 0: shortcols = 0
+        shortcols = 4
         for i in range(0, len(cText)):
             if cText[i] in word and \
                (wordSearch(cText, word, i, collen, shortcols, [])):
@@ -186,76 +173,6 @@ def genRandKey(numCol):
     random.shuffle(ans)
     return ans
 
-def breed(key1, key2, mutFact):
-    ans = []
-    for i in range(0, len(key1)):
-        randbit = random.randrange(0,2)
-        if randbit:
-            ans.append(key1[i])
-        else:
-            ans.append(key2[i])
-        if random.randrange(0, 100) < mutFact:
-            swap(ans, random.randrange(0, i), i)
-    return ans
-
-def sortThings(masterList, slaveList, a, b):
-    wasString = False
-    if type(masterList) == str:
-        wasString = True
-        masterList = bytearray(masterList)
-    if b < a:
-        pivot = a
-        pivVal = masterList[a]
-        swap([masterList, slaveList], a, b)
-        index = a
-        for i in range(a, b):
-            if masterList[i] >= pivVal:
-                swap([masterList, slaveList], i, index)
-                index += 1
-        swap([masterList, slaveList], index, b)
-        sortThings(masterList, slaveList, a, index - 1)
-        sortThings(masterList, slaveList, index + 1, b)
-    if wasString:
-        masterList = str(masterList)
-
-def genSolve(cText, words, numCol):
-    random.seed()
-    firstLetters = getFirstLetters(words)
-    l2w = filter(lambda x: len(x) == 2, words)
-    l3w = filter(lambda x: len(x) == 3, words)
-    l4w = filter(lambda x: len(x) == 4, words)
-    generation = 0
-    keys = []
-    for i in range(0, 10):
-        key = genRandKey(numCol)
-        print(key)
-        keys.append(key)
-    wordsFound = [0]*len(keys)
-    print(wordsFound[0])
-    while generation < 2000:
-        if (generation % 1000) == 0:
-            print("Generation: {0}, words: {1}".format(generation,
-                                                    wordsFound[0]))
-        wordsFound = [0]*len(keys)
-        for i in range(0, len(keys)):
-            key = keys[i]
-            pText = decColumn(cText, key)
-            numWords = findWords(pText, firstLetters, l2w, l3w, l4w)
-            if numWords > 2:
-                print(pText)
-                print(keys[i])
-                print(numWords)
-            wordsFound[i] = numWords
-        sortThings(wordsFound, keys, 0, len(wordsFound) - 1)
-        newKeys = []
-        for i in range(0, 10):
-            par1 = random.randrange(0, 5) * 2
-            par2 = random.randrange(0, 5) * 2 + 1
-            newKeys.append(breed(keys[par1], keys[par2], 0))
-        keys = newKeys
-        print(keys)
-        generation += 1
-
 def countDigrams(string):
     digrams = collections.defaultdict(float)
     for i in range(0, len(string) - 1):
@@ -271,10 +188,11 @@ def score(digrams):
     return ans
 
 def newKey(cText, key, temp, oldScore):
+    randintN = random.randrange(1, len(key)/2)
     randint1 = random.randrange(0, len(key))
     randint2 = random.randrange(0, len(key))
     newKey = copy(key)
-    swap([newKey], randint1, randint2)
+    shiftN([newKey], randintN, randint1, randint2)
     newPText = decColumn(cText, newKey)
     newScore = score(countDigrams(newPText))
     dif = newScore - oldScore
@@ -287,7 +205,9 @@ def newKey(cText, key, temp, oldScore):
             return key
 
 def shouldJump(dif, temp):
-    fact = math.exp(-1000 * float(dif) / temp)
+    if temp == 0:
+        return False
+    fact = math.exp(-10000 * float(dif) / temp)
     if random.random() < fact:
         return True
     else:
@@ -299,14 +219,60 @@ def swap(arrs, ind1, ind2):
         arr[ind1] = arr[ind2]
         arr[ind2] = temp
 
+def swapArr(arrs, n, ind1, ind2):
+    for arr in arrs:
+        temp = arr[ind1:ind1+n]
+        arr[ind1:ind1+n] = arr[ind2:ind2+n]
+        arr[ind2:ind2+n] = temp
+
+def shiftN(arrs, n, ind1, ind2):
+    """
+    Shifts n values in arr from ind1 to ind2, sliding other elements around.
+    Allows ind1 < or > ind 2. If larger index + n > len(arr), takes as many
+    values as it can
+    """
+    if ind1 < ind2:
+        for arr in arrs:
+            if ind2 + n > len(arr):
+                n = len(arr) - ind2
+            temp = arr[ind1:ind1+n]
+            arr[ind1:ind2] = arr[ind1+n:ind2+n]
+            arr[ind2:ind2+n] = temp
+    else:
+        for arr in arrs:
+            if ind1 + n > len(arr):
+                n = len(arr) - ind1
+            temp = arr[ind1:ind1+n]
+            arr[ind2+n:ind1+n] = arr[ind2:ind1]
+            arr[ind2:ind2+n] = temp            
+
 def saSolve(cText, numCol):
+    print("--------------- Starting Simulated Anneaing Run --------------------")
     random.seed()
     key = genRandKey(numCol)
     pText = decColumn(cText, key)
     newScore = score(countDigrams(pText))
     bestScore = score
+    bestKey = key
     temp = 100.0
+    noMove = 0
     while temp > 0:
+        oldKey = key
+        key = newKey(cText, key, temp, newScore)
+        if oldKey == key:
+            noMove += 1
+            continue
+        pText = decColumn(cText, key)
+        newScore = score(countDigrams(pText))
+        if newScore < bestScore:
+            print(pText)
+            print(key)
+            print(newScore)
+            bestScore = newScore
+            bestKey = key
+        temp -= 0.001
+    temp = 0 # Only necessary if increment doesn't divide demp
+    for i in range(0,100000):
         key = newKey(cText, key, temp, newScore)
         pText = decColumn(cText, key)
         newScore = score(countDigrams(pText))
@@ -315,25 +281,11 @@ def saSolve(cText, numCol):
             print(key)
             print(newScore)
             bestScore = newScore
-        temp -= 0.01
+            bestKey = key
+    print(noMove)
     return pText
 
 
-pText = 'IfplaintextisstoredinacomputerfileandthesituationofautomaticallymadebackupfilesgeneratedduringprogramexecutionmustbeincludedhereevenifinvisibletotheuserthestoragemediaalongwiththeentirecomputeranditscomponentsmustbesecureSensitivedataissometimesprocessedoncomputerswhosemassstorageisremovableinwhichcasephysicalsecurityoftheremoveddiskisseparatelyvitalInthecaseofsecuringacomputerusefulasopposedtohandwavingsecuritymustbephysicalegagainstburglarybrazenremovalundercoverofsupposedrepairinstallationofcovertmonitoringdevicesetcaswellasvirtualegoperatingsystemmodificationillicitnetworkaccessTrojanprogramsThewideavailabilityofkeydriveswhichcanplugintomostmoderncomputersandstorelargequantitiesofdataposesanotherseveresecurityheadacheAspyperhapsposingasacleaningpersoncouldeasilyconcealoneandevenswallowitifnecessary'.upper()
+cText = matchFrequencies.getString(sys.argv[1])
 
-myKey = "ABCDEFGHIJKLMNOP"
-myKey2 = [0,1,2,3]
-cText = encColumn(pText,myKey2)
-cText2 = ColTrans(myKey).encipher(pText)
-
-pText2 = decColumn(cText,myKey2)
-
-print(cText)
-print(cText2)
-print("===========")
-print(pText)
-print(pText2)
-print("===========")
-
-sortThings(myKey, myKey2, 0, len(myKey)-1)
-print(score(countDigrams(saSolve(cText2, 16))))
+#print(score(countDigrams(saSolve(cText, 20))))
