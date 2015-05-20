@@ -20,10 +20,12 @@ from scrapeFreq import get_freqs
 from encode import encColumn
 import string
 from charEng import countDigrams, score
-from arrTools import sortThings, numMatches, modArray
+from arrTools import sortThings, numMatches, modArray, swap, swapArr
 
 words = ['THE', 'BE', 'TO', 'OF', 'AND', 'IN', 'THAT', 'HAVE', 'IT',
-          'FOR', 'NOT', 'ON', 'WITH', 'HE', 'AS', 'YOU', 'DO', 'AT']
+         'FOR', 'NOT', 'ON', 'WITH', 'HE', 'AS', 'YOU', 'DO', 'AT']
+
+flag = True
 
 quadFreq = collections.defaultdict(float)
 quadFile = open('quadgrams.txt', 'r')
@@ -37,6 +39,9 @@ quadFile = open('quadgrams.txt', 'r')
 for line in quadFile:
     quadGram = line[0:4]
     count = int(line[5:len(line) - 1])
+    if flag:
+        print(count)
+        flag = False
     quadFreq[quadGram] = float(count)/mySum
 
 def getFirstLetters(words):
@@ -197,6 +202,19 @@ def score(quadgrams):
             ans += math.log(quadFreq[quadgram])
     return ans
 
+def randShift(key):
+    randintN = random.randrange(1, len(key)/2)
+    randint1 = random.randrange(0, len(key))
+    randint2 = random.randrange(0, len(key))
+    newKey = copy(key)
+    shiftN([newKey], randintN, randint1, randint2)
+
+def randSwap(key):
+    randint1 = random.randrange(0, len(key))
+    randint2 = random.randrange(0, len(key))
+    newKey = copy(key)
+    swap([newKey], randint1, randint2)
+
 def newKey(cText, key, temp, oldScore):
     randintN = random.randrange(1, len(key)/2)
     randint1 = random.randrange(0, len(key))
@@ -217,23 +235,11 @@ def newKey(cText, key, temp, oldScore):
 def shouldJump(dif, temp):
     if temp == 0:
         return False
-    fact = math.exp(.7 * float(dif) / temp)
+    fact = math.exp(.3 * float(dif) / temp)
     if random.random() < fact:
         return True
     else:
         return False
-    
-def swap(arrs, ind1, ind2):
-    for arr in arrs:
-        temp = arr[ind1]
-        arr[ind1] = arr[ind2]
-        arr[ind2] = temp
-
-def swapArr(arrs, n, ind1, ind2):
-    for arr in arrs:
-        temp = arr[ind1:ind1+n]
-        arr[ind1:ind1+n] = arr[ind2:ind2+n]
-        arr[ind2:ind2+n] = temp
 
 def shiftN(arrs, n, ind1, ind2):
     """
@@ -257,21 +263,24 @@ def shiftN(arrs, n, ind1, ind2):
             arr[ind2:ind2+n] = temp            
 
 def saSolve(cText, numCol):
-    print("--------------- Starting Simulated Anneaing Run --------------------")
+    message1 = "Starting Simulated Anneaing Run"
+    print("{0:-^70}".format(message1))
+    message2 = "Number of columns: {0}".format(numCol)
+    print("{0:-^70}".format(message2))
     random.seed()
     key = genRandKey(numCol)
     pText = decColumn(cText, key)
     newScore = score(countNGrams(pText, 4))
-    bestScore = score
+    bestScore = newScore
     bestKey = key
     temp = 100.0
-    steps = 100000
+    steps = 30000
     stepsize = temp/steps
     step = 0
     noMove = 0
     while temp > 0:
-        if step % (steps / 100) == 0:
-            print("Current temperature: {0}".format(temp))
+        if step % (steps / 10) == 0:
+            print("Current temperature: {0: .1f}".format(temp))
         oldKey = key
         key = newKey(cText, key, temp, newScore)
         if oldKey == key:
@@ -281,19 +290,21 @@ def saSolve(cText, numCol):
             continue
         pText = decColumn(cText, key)
         newScore = score(countNGrams(pText, 4))
-        if newScore < bestScore:
+        if newScore > bestScore:
+            print(newScore)
             bestScore = newScore
             bestKey = key
         temp -= stepsize
         step += 1
     temp = 0 # Only necessary if increment doesn't divide demp
-    print('Beginning hill climbing (falling) stage')
+    print('Beginning hill climbing stage')
     hillCount = 0
-    while hillCount < 10000:
+    while hillCount < 3000:
         key = newKey(cText, key, temp, newScore)
         pText = decColumn(cText, key)
         newScore = score(countNGrams(pText, 4))
-        if newScore < bestScore:
+        if newScore > bestScore:
+            print(newScore)
             bestScore = newScore
             bestKey = key
             hillCount = 0
@@ -308,7 +319,14 @@ cText = matchFrequencies.getString(sys.argv[1])
 
 test = 'ITSINVAINTROTTORECALLTHEPASTUNLESSITWORKSSOMEINFLUENCEUPONTHEPRESENTWEMUSTMEETREVERSESBOLDLYANDNOTSUFFERTHEMTOFRIGHTENUSMYDEARWEMUSTLEARNTOACTTHEPLAYOUTWEMUSTLIVEMISFORTUNEDOWNTROTTHEMINDISITSOWNPLACEANDINITSELFCANMAKEAHEAVENOFHELLAHELLOFHEAVENWESHOULDREGRETOURMISTAKESANDLEARNFROMTHEMBUTNEVERCARRYTHEMFORWARDINTOTHEFUTUREWITHUSOHFRIENDJOHNITISASTRANGEWORLDASADWORLDAWORLDFULLOFMISERIESANDWOESANDTROUBLESANDYETWHENKINGLAUGHCOMEHEMAKETHEMALLDANCETOTHETUNEHEPLAYSCIENCEMYLADISMADEUPOFMISTAKESBUTTHEYAREMISTAKESWHICHITISUSEFULTOMAKEBECAUSETHEYLEADLITTLEBYLITTLETOTHETRUTHUNWELCOMETRUTHSARENOTPOPULAR'
 
-testctext = encColumn(test, [0,1,2,3,4,5,6,7,8,9,10,11,12,12,14,15,16,17,18,19])
+key = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
+testctext = encColumn(test, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19])
+assert(test == decColumn(testctext, key))
 
-print(score(countNGrams(test, 4)))
-answer = saSolve(test, 20)
+answer = ""
+for i in range(5,21):
+    testpText = saSolve(cText, i)
+    if (score(countNGrams(testpText, 4))) > -6000:
+        print(testpText)
+        answer = testpText
+        break

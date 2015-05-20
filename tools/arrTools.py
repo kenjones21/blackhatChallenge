@@ -31,3 +31,15 @@ def modArray(arr, mod):
     for i in range(0, len(arr)):
         newArr.append(arr[i] % mod)
     return newArr
+
+def swap(arrs, ind1, ind2):
+    for arr in arrs:
+        temp = arr[ind1]
+        arr[ind1] = arr[ind2]
+        arr[ind2] = temp
+
+def swapArr(arrs, n, ind1, ind2):
+    for arr in arrs:
+        temp = arr[ind1:ind1+n]
+        arr[ind1:ind1+n] = arr[ind2:ind2+n]
+        arr[ind2:ind2+n] = temp
