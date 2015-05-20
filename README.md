@@ -9,7 +9,13 @@ If you've stumbled onto this code, simply clone the directory and use the module
 I'll have more info on exactly what they all do later. Contact me if you wish to be added as
 a collaborator so I don't have as much work to do.
 
+The bigram and quadgram (as well as tri and quint) files are
+[here](http://practicalcryptography.com/cryptanalysis/text-characterisation/quadgrams/), credit to James
+who created that site and compiled the frequencies. 
+
 ## Modules
+
+This is in no way shape or form up to date documentation, sorry.
 
 ### stringOps
 Module for performing operations on strings. Currently has the following methods
