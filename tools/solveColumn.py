@@ -25,19 +25,19 @@ from arrTools import sortThings, numMatches, modArray
 words = ['THE', 'BE', 'TO', 'OF', 'AND', 'IN', 'THAT', 'HAVE', 'IT',
           'FOR', 'NOT', 'ON', 'WITH', 'HE', 'AS', 'YOU', 'DO', 'AT']
 
-diFreq = collections.defaultdict(float)
-diFile = open('bigrams.txt', 'r')
+quadFreq = collections.defaultdict(float)
+quadFile = open('quadgrams.txt', 'r')
 mySum = 0.0
-for line in diFile:
-    count = int(line[3:len(line) - 2])
+for line in quadFile:
+    count = int(line[5:len(line) - 1])
     mySum += float(count)
 
-diFile = open('bigrams.txt', 'r')
+quadFile = open('quadgrams.txt', 'r')
     
-for line in diFile:
-    digram = line[0] + line[1]
-    count = int(line[3:len(line) - 2])
-    diFreq[digram] = float(count)/mySum
+for line in quadFile:
+    quadGram = line[0:4]
+    count = int(line[5:len(line) - 1])
+    quadFreq[quadGram] = float(count)/mySum
 
 def getFirstLetters(words):
     ans = ""
@@ -181,10 +181,20 @@ def countDigrams(string):
         digrams[c1+c2] += 1.0/len(string)
     return digrams
 
-def score(digrams):
+def countNGrams(string, n):
+    ngrams = collections.defaultdict(float)
+    for i in range(0, len(string) - n):
+        c1 = string[i:i+n]
+        ngrams[c1] += 1.0/len(string)
+    return ngrams
+
+def score(quadgrams):
     ans = 0.0
-    for digram in digrams.keys():
-        ans += (digrams[digram] - diFreq[digram])**2
+    for quadgram in quadgrams:
+        if quadgram not in quadFreq:
+            ans += -23
+        else: 
+            ans += math.log(quadFreq[quadgram])
     return ans
 
 def newKey(cText, key, temp, oldScore):
@@ -194,9 +204,9 @@ def newKey(cText, key, temp, oldScore):
     newKey = copy(key)
     shiftN([newKey], randintN, randint1, randint2)
     newPText = decColumn(cText, newKey)
-    newScore = score(countDigrams(newPText))
+    newScore = score(countNGrams(newPText, 4))
     dif = newScore - oldScore
-    if dif < 0:
+    if dif > 0:
         return newKey
     else:
         if shouldJump(dif, temp):
@@ -207,7 +217,7 @@ def newKey(cText, key, temp, oldScore):
 def shouldJump(dif, temp):
     if temp == 0:
         return False
-    fact = math.exp(-10000 * float(dif) / temp)
+    fact = math.exp(.7 * float(dif) / temp)
     if random.random() < fact:
         return True
     else:
@@ -251,41 +261,54 @@ def saSolve(cText, numCol):
     random.seed()
     key = genRandKey(numCol)
     pText = decColumn(cText, key)
-    newScore = score(countDigrams(pText))
+    newScore = score(countNGrams(pText, 4))
     bestScore = score
     bestKey = key
     temp = 100.0
+    steps = 100000
+    stepsize = temp/steps
+    step = 0
     noMove = 0
     while temp > 0:
+        if step % (steps / 100) == 0:
+            print("Current temperature: {0}".format(temp))
         oldKey = key
         key = newKey(cText, key, temp, newScore)
         if oldKey == key:
             noMove += 1
+            temp -= stepsize
+            step += 1
             continue
         pText = decColumn(cText, key)
-        newScore = score(countDigrams(pText))
+        newScore = score(countNGrams(pText, 4))
         if newScore < bestScore:
-            print(pText)
-            print(key)
-            print(newScore)
             bestScore = newScore
             bestKey = key
-        temp -= 0.001
+        temp -= stepsize
+        step += 1
     temp = 0 # Only necessary if increment doesn't divide demp
-    for i in range(0,100000):
+    print('Beginning hill climbing (falling) stage')
+    hillCount = 0
+    while hillCount < 10000:
         key = newKey(cText, key, temp, newScore)
         pText = decColumn(cText, key)
-        newScore = score(countDigrams(pText))
+        newScore = score(countNGrams(pText, 4))
         if newScore < bestScore:
-            print(pText)
-            print(key)
-            print(newScore)
             bestScore = newScore
             bestKey = key
-    print(noMove)
+            hillCount = 0
+        hillCount += 1
+    print("During regular stage, didn't move {0} times".format(noMove))
+    print(bestKey)
+    print(bestScore)
     return pText
 
 
 cText = matchFrequencies.getString(sys.argv[1])
 
-#print(score(countDigrams(saSolve(cText, 20))))
+test = 'ITSINVAINTROTTORECALLTHEPASTUNLESSITWORKSSOMEINFLUENCEUPONTHEPRESENTWEMUSTMEETREVERSESBOLDLYANDNOTSUFFERTHEMTOFRIGHTENUSMYDEARWEMUSTLEARNTOACTTHEPLAYOUTWEMUSTLIVEMISFORTUNEDOWNTROTTHEMINDISITSOWNPLACEANDINITSELFCANMAKEAHEAVENOFHELLAHELLOFHEAVENWESHOULDREGRETOURMISTAKESANDLEARNFROMTHEMBUTNEVERCARRYTHEMFORWARDINTOTHEFUTUREWITHUSOHFRIENDJOHNITISASTRANGEWORLDASADWORLDAWORLDFULLOFMISERIESANDWOESANDTROUBLESANDYETWHENKINGLAUGHCOMEHEMAKETHEMALLDANCETOTHETUNEHEPLAYSCIENCEMYLADISMADEUPOFMISTAKESBUTTHEYAREMISTAKESWHICHITISUSEFULTOMAKEBECAUSETHEYLEADLITTLEBYLITTLETOTHETRUTHUNWELCOMETRUTHSARENOTPOPULAR'
+
+testctext = encColumn(test, [0,1,2,3,4,5,6,7,8,9,10,11,12,12,14,15,16,17,18,19])
+
+print(score(countNGrams(test, 4)))
+answer = saSolve(test, 20)

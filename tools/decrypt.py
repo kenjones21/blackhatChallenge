@@ -77,7 +77,6 @@ def decColumn(cText, key):
         decKey.append(-1)
     for i in range(0, len(key)):
         decKey[key[i]] = i
-    print(decKey)
     numCol = len(key)
     longCol = len(cText) % numCol
     shortCol = numCol - longCol
@@ -96,7 +95,6 @@ def decColumn(cText, key):
             for j in range(char,char+shortLength):
                 cols[decKey[i]] += cText[char]
                 char += 1
-    print(cols)
     sortThings(decKey, cols, 0, len(key))
     for i in range(0, len(cText)):
         ans += cols[i % len(key)][i / len(key)]
