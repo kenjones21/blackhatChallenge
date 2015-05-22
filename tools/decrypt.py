@@ -56,7 +56,6 @@ def decVigenere(cText, key):
 def decHill(cText, key):
     ans = ""
     decKey = numpy.matrix(matInverse(key));
-    print(decKey)
     numText = map(ord, cText)
     numText = map(lambda x: x - ord('A'), numText)
     for i in range(0,len(cText)/2):
@@ -109,12 +108,13 @@ def matInverse(matrix):
     ans[0][1] = (det * -matrix[0][1]) % 26
     return ans
 
-def inverse(num):
+def inverse(num, output=True):
     """Calculates the (multiplicative) inverse of a number mod 26"""
     for i in range(0,26): # I know, I know, could use EA or something, lazy. 
         if (i * num) % 26 == 1:
             return i
-    print(Fore.RED + "No inverse for this number!" + Fore.RESET)
+    if(output):
+        print(Fore.RED + "No inverse for this number!" + Fore.RESET)
     return 0 # Should make things obvious for our purposes. 
 
 

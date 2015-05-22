@@ -37,3 +37,11 @@ def encColumn(pText, key):
     for col in cols:
         ans += col
     return ans
+
+def encPlayfair(pText, key):
+    key
+    if len(pText) % 2 == 1:
+        pText += "X"
+    ans = []
+    for i in range(0, len(pText)/2):
+        print("I'm bored now")

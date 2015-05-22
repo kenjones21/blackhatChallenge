@@ -1,9 +1,6 @@
 """
 My file for solving column transposition cipher.
-The lack of padding at the end really fucks you over
-Seriously fuck this
-Can you even decrypt this given a key?
-Yeah you can nevermind
+It worked! Hallelujah praise the lord
 """
 
 import sys
@@ -16,10 +13,9 @@ import bisect
 import random
 from copy import copy
 from pycipher import ColTrans
-from scrapeFreq import get_freqs
 from encode import encColumn
 import string
-from charEng import countDigrams, score
+from charEng import countDigrams, score, countNGrams
 from arrTools import sortThings, numMatches, modArray, swap, swapArr
 
 words = ['THE', 'BE', 'TO', 'OF', 'AND', 'IN', 'THAT', 'HAVE', 'IT',
@@ -178,30 +174,6 @@ def genRandKey(numCol):
     random.shuffle(ans)
     return ans
 
-def countDigrams(string):
-    digrams = collections.defaultdict(float)
-    for i in range(0, len(string) - 1):
-        c1 = string[i]
-        c2 = string[i+1]
-        digrams[c1+c2] += 1.0/len(string)
-    return digrams
-
-def countNGrams(string, n):
-    ngrams = collections.defaultdict(float)
-    for i in range(0, len(string) - n):
-        c1 = string[i:i+n]
-        ngrams[c1] += 1.0/len(string)
-    return ngrams
-
-def score(quadgrams):
-    ans = 0.0
-    for quadgram in quadgrams:
-        if quadgram not in quadFreq:
-            ans += -23
-        else: 
-            ans += math.log(quadFreq[quadgram])
-    return ans
-
 def randShift(key):
     randintN = random.randrange(1, len(key)/2)
     randint1 = random.randrange(0, len(key))
@@ -324,9 +296,7 @@ testctext = encColumn(test, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19])
 assert(test == decColumn(testctext, key))
 
 answer = ""
-for i in range(5,21):
-    testpText = saSolve(cText, i)
-    if (score(countNGrams(testpText, 4))) > -6000:
-        print(testpText)
-        answer = testpText
-        break
+testpText = saSolve(cText, 11)
+if (score(countNGrams(testpText, 4))) > -6000:
+    print(testpText)
+    answer = testpText
