@@ -3,3 +3,4 @@ tools/__pycache__
 notes/
 tools/solveVigenere.py
 *.pyc
+*.txt
