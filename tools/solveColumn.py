@@ -82,7 +82,7 @@ def guessColumns(cText, word):
     for i in range (5,11):
         for j in range(0, len(letterpos)):
             letterpos[j] = modArray(letterpos[j], len(cText)/i)
-        print numMatches(letterpos[0], letterpos[1])
+        print(numMatches(letterpos[0], letterpos[1]))
     return 0
 
 def guessColumns(cText):
@@ -233,6 +233,12 @@ def shiftN(arrs, n, ind1, ind2):
             temp = arr[ind1:ind1+n]
             arr[ind2+n:ind1+n] = arr[ind2:ind1]
             arr[ind2:ind2+n] = temp            
+
+def swapN(arrs, n, ind1, ind2):
+    for arr in arrs:
+        tempArr = arr[ind1:ind1+n]
+        arr[ind1:ind1+n] = arr[ind2:ind2+n]
+        arr[ind2:ind2+n] = tempArr
 
 def saSolve(cText, numCol):
     message1 = "Starting Simulated Anneaing Run"

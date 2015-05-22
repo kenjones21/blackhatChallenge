@@ -53,6 +53,7 @@ def decVigenere(cText, key):
         ans += chr((ord(cText[c]) - A + shifts[c % len(key)]) % 26 + A)
     return ans
 
+
 def decHill(cText, key):
     ans = ""
     decKey = numpy.matrix(matInverse(key));
