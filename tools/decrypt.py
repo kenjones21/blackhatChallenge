@@ -118,4 +118,39 @@ def inverse(num, output=True):
         print(Fore.RED + "No inverse for this number!" + Fore.RESET)
     return 0 # Should make things obvious for our purposes. 
 
+def decPlayfair(cText, key):
+    keyDict = collections.defaultdict(list)
+    pText = ""
+    for i in range (0, len(key)):
+        keyDict[key[i]] = [i/5, i%5]
+    for i in range(0, len(cText)/2):
+        a = cText[i*2]
+        b = cText[i*2+1]
+        rowA = keyDict[a][0]
+        rowB = keyDict[b][0]
+        colA = keyDict[a][1]
+        colB = keyDict[b][1]
+        if rowA == rowB:
+            newColA = (colA - 1) % 5
+            newColB = (colB - 1) % 5
+            pa = key[(rowA*5 + newColA) % 25]
+            pb = key[(rowB*5 + newColB) % 25]
+            if pa != 'X': pText += pa
+            if pb != 'X': pText += pb
+        elif colA == colB:
+            newRowA = (rowA - 1) % 5
+            newRowB = (rowB - 1) % 5
+            pa = key[(newRowA*5 + colA) % 25]
+            pb = key[(newRowB*5 + colB) % 25]
+            if pa != 'X': pText += pa
+            if pb != 'X': pText += pb
+        else:
+            pa = key[(rowA*5 + colB)]
+            pb = key[(rowB*5 + colA)]
+            if pa != 'X': pText += pa
+            if pb != 'X': pText += pb
+    return pText
 
+key = 'PLAYFIREXMBCDGHKNOQSTUVWZ'
+cText = 'BMODZBXDNABEKUDMUIXMMOUVIF'
+print(decPlayfair(cText, key))

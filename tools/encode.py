@@ -39,9 +39,40 @@ def encColumn(pText, key):
     return ans
 
 def encPlayfair(pText, key):
-    key
+    keyDict = collections.defaultdict(list)
+    cText = ""
+    for i in range (0, len(key)):
+        keyDict[key[i]] = [i/5, i%5]
     if len(pText) % 2 == 1:
         pText += "X"
     ans = []
     for i in range(0, len(pText)/2):
-        print("I'm bored now")
+        a = pText[i*2]
+        b = pText[i*2+1]
+        if a == b:
+            b = 'X'
+            pText = pText[:2*i+1] + 'X' + pText[2*i+1:]
+        rowA = keyDict[a][0]
+        rowB = keyDict[b][0]
+        colA = keyDict[a][1]
+        colB = keyDict[b][1]
+        if rowA == rowB:
+            newColA = (colA + 1) % 5
+            newColB = (colB + 1) % 5
+            ca = key[(rowA*5 + newColA) % 25]
+            cb = key[(rowB*5 + newColB) % 25]
+            cText += ca
+            cText += cb
+        elif colA == colB:
+            newRowA = (rowA + 1) % 5
+            newRowB = (rowB + 1) % 5
+            ca = key[(newRowA*5 + colA) % 25]
+            cb = key[(newRowB*5 + colB) % 25]
+            cText += ca
+            cText += cb
+        else:
+            ca = key[(rowA*5 + colB)]
+            cb = key[(rowB*5 + colA)]
+            cText += ca
+            cText += cb
+    return cText
